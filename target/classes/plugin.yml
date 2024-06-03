@@ -1,0 +1,6 @@
+name: DeathInventory
+version: 1.0
+main: deathinventory.DeathInventory
+api-version: 1.20
+description: A plugin that stores player inventory in their head at the death location.
+author: Kase Johnson
