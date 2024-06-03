@@ -11,5 +11,7 @@ You can [download](https://legacy.curseforge.com/minecraft/bukkit-plugins/headst
 
 ## My Other Plugins
 
-- [EzHomes](https://github.com/Kasej01/EzHomes) - /home plugin with user configuration
-- [RolePlayers](https://github.com/Kasej01/RolePlayers) - Classes Plugin with multiple classes (scout, farmer, warrior, barbarian, etc.)
+- [RolePlayers Repo](https://github.com/Kasej01/EzHomes) - RolePlayers adds custom classes [Download](https://www.curseforge.com/minecraft/bukkit-plugins/ezhomes)
+- [EzHomes Repo](https://github.com/Kasej01/EzHomes) - Inventory on death is saved in a head that can be retrieved [Download](https://www.curseforge.com/minecraft/bukkit-plugins/ezhomes)
+- [TeePeeRequests Repo](https://github.com/KaseJ01/TeePeeReqeusts) - Simple homes plugin [Download](https://www.curseforge.com/minecraft/bukkit-plugins/teepeerequests)
+
