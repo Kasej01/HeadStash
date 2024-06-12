@@ -31,6 +31,7 @@ public class HeadStashListener implements Listener {
     private final JavaPlugin plugin;
     private final HashMap<String, ItemStack[]> deathInventories = new HashMap<>();
     private final HashMap<String, UUID> deathLocations = new HashMap<>();
+    private final HashMap<String, Integer> deathXP = new HashMap<>();
     private final File dataFile;
     private final YamlConfiguration dataConfig;
 
@@ -49,10 +50,10 @@ public class HeadStashListener implements Listener {
 
     private Location stringToLocation(String locStr) {
         String[] parts = locStr.split("_");
-        return new Location(Bukkit.getWorld(parts[0]), 
-                            Integer.parseInt(parts[1]), 
-                            Integer.parseInt(parts[2]), 
-                            Integer.parseInt(parts[3]));
+        return new Location(Bukkit.getWorld(parts[0]),
+                Integer.parseInt(parts[1]),
+                Integer.parseInt(parts[2]),
+                Integer.parseInt(parts[3]));
     }
 
     public void saveData() {
@@ -68,6 +69,12 @@ public class HeadStashListener implements Listener {
             dataConfig.set("locations." + locStr, uuid.toString());
         }
 
+        for (Map.Entry<String, Integer> entry : deathXP.entrySet()) {
+            String locStr = entry.getKey();
+            int xp = entry.getValue();
+            dataConfig.set("xp." + locStr, xp);
+        }
+
         try {
             dataConfig.save(dataFile);
         } catch (IOException e) {
@@ -78,15 +85,26 @@ public class HeadStashListener implements Listener {
     public void loadData() {
         if (!dataFile.exists()) return;
 
-        for (String locStr : dataConfig.getConfigurationSection("inventories").getKeys(false)) {
-            List<ItemStack> inventoryList = (List<ItemStack>) dataConfig.get("inventories." + locStr);
-            ItemStack[] inventory = inventoryList.toArray(new ItemStack[0]);
-            deathInventories.put(locStr, inventory);
+        if (dataConfig.getConfigurationSection("inventories") != null) {
+            for (String locStr : dataConfig.getConfigurationSection("inventories").getKeys(false)) {
+                List<ItemStack> inventoryList = (List<ItemStack>) dataConfig.get("inventories." + locStr);
+                ItemStack[] inventory = inventoryList.toArray(new ItemStack[0]);
+                deathInventories.put(locStr, inventory);
+            }
         }
 
-        for (String locStr : dataConfig.getConfigurationSection("locations").getKeys(false)) {
-            UUID uuid = UUID.fromString(dataConfig.getString("locations." + locStr));
-            deathLocations.put(locStr, uuid);
+        if (dataConfig.getConfigurationSection("locations") != null) {
+            for (String locStr : dataConfig.getConfigurationSection("locations").getKeys(false)) {
+                UUID uuid = UUID.fromString(dataConfig.getString("locations." + locStr));
+                deathLocations.put(locStr, uuid);
+            }
+        }
+
+        if (dataConfig.getConfigurationSection("xp") != null) {
+            for (String locStr : dataConfig.getConfigurationSection("xp").getKeys(false)) {
+                int xp = dataConfig.getInt("xp." + locStr);
+                deathXP.put(locStr, xp);
+            }
         }
     }
 
@@ -95,11 +113,13 @@ public class HeadStashListener implements Listener {
         Player player = event.getEntity();
         UUID playerUUID = player.getUniqueId();
 
-        // Store player inventory
+        // Store player inventory and XP
         ItemStack[] playerInventory = player.getInventory().getContents();
+        int playerXP = player.getTotalExperience();
 
-        // Clear player's inventory from drops
+        // Clear player's inventory and XP from drops
         event.getDrops().clear();
+        event.setDroppedExp(0);
 
         // Place a player head at the death location
         Location deathLocation = player.getLocation();
@@ -115,14 +135,15 @@ public class HeadStashListener implements Listener {
         skull.getPersistentDataContainer().set(key, PersistentDataType.STRING, playerUUID.toString());
         skull.update();
 
-        // Store the inventory and death location
+        // Store the inventory, XP, and death location
         String locationKey = locationToString(deathLocation);
         deathInventories.put(locationKey, playerInventory);
         deathLocations.put(locationKey, playerUUID);
+        deathXP.put(locationKey, playerXP);
 
         // Notify player
         String deathLocationMessage = String.format("X: %d, Y: %d, Z: %d", deathLocation.getBlockX(), deathLocation.getBlockY(), deathLocation.getBlockZ());
-        player.sendMessage(ChatColor.GRAY + "Your inventory is stored in your head at: " + deathLocationMessage);
+        player.sendMessage(ChatColor.GRAY + "Your inventory and XP are stored in your head at: " + deathLocationMessage);
     }
 
     @EventHandler
@@ -141,6 +162,7 @@ public class HeadStashListener implements Listener {
 
                         if (deathInventories.containsKey(locationKey)) {
                             ItemStack[] storedInventory = deathInventories.get(locationKey);
+                            int storedXP = deathXP.getOrDefault(locationKey, 0);
 
                             // Add stored inventory to player's current inventory
                             for (ItemStack item : storedInventory) {
@@ -149,14 +171,22 @@ public class HeadStashListener implements Listener {
                                 }
                             }
 
-                            // Remove the stored inventory and death location
+                            // Retrieve XP return ratio from config
+                            double xpReturnRatio = plugin.getConfig().getDouble("xp-return-ratio", 1.0);
+                            int xpToReturn = (int) (storedXP * xpReturnRatio);
+
+                            // Set player's XP
+                            player.giveExp(xpToReturn);
+
+                            // Remove the stored inventory, XP, and death location
                             deathInventories.remove(locationKey);
                             deathLocations.remove(locationKey);
+                            deathXP.remove(locationKey);
 
                             // Remove the head block
                             clickedBlock.setType(Material.AIR);
 
-                            player.sendMessage(ChatColor.GREEN + "Your inventory has been restored.");
+                            player.sendMessage(ChatColor.GREEN + "Your inventory and XP have been restored.");
                         } else {
                             player.sendMessage(ChatColor.RED + "No player data found in this head.");
                         }

@@ -1,6 +1,6 @@
-name: DeathInventory
+name: HeadStash
 version: 1.0
-main: deathinventory.DeathInventory
+main: headstash.HeadStash
 api-version: 1.20
 description: A plugin that stores player inventory in their head at the death location.
 author: Kase Johnson

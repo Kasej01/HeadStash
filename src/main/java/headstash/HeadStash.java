@@ -19,6 +19,7 @@ public class HeadStash extends JavaPlugin {
                 getLogger().log(Level.SEVERE, "Could not create data file", e);
             }
         }
+        saveDefaultConfig();  // Save default config if not exist
         deathEventListener = new HeadStashListener(this);
         deathEventListener.loadData();
         getServer().getPluginManager().registerEvents(deathEventListener, this);

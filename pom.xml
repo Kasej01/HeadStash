@@ -4,8 +4,8 @@
   <groupId>headstash.HeadStash</groupId>
   <artifactId>HeadStash</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
-  <name>DeathInventory</name>
+  <version>1.1</version>
+  <name>HeadStash</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
